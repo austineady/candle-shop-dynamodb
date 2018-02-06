@@ -226,7 +226,7 @@ productsCtrl.saveProduct(product); // can pass cb if needed
 
 Keeping all of these actions predefined in a single script is limiting. With some simple express routes, some API endpoints can be created. Still keeping it simple, the immensely useful [Postman](https://www.getpostman.com/) desktop application will be used to make these HTTP requests.
 
-The creation of products functionality will be first. Following REST principles, the route to create new products will be a POST request to `http://localhost:8080/products`. The route will accept a `Content-Type` of `application/json` and will require a product `name` and `price` be present in the body.
+The creation of products functionality will be first. Following REST principles, the route to create new products will be a POST request to `http://localhost:3000/products`. The route will accept a `Content-Type` of `application/json` and will require a product `name` and `price` be present in the body.
 
 [Express Documentation](https://expressjs.com/en/guide/routing.html)
 
@@ -260,7 +260,7 @@ app.post('/products', function (req, res) {
 
 ### Using Postman
 
-Open Postman and enter `http://localhost:8080/products` into the address bar. On the left side of the address bar, select `POST` instead of `GET`. Underneath the address bar, click the Headers tab. The first key field will be `Content-Type` and it's value will be `application/json`. Click the Body tab and select the "raw" radio button. Select "JSON (application/json)" from the dropdown on the right.
+Open Postman and enter `http://localhost:3000/products` into the address bar. On the left side of the address bar, select `POST` instead of `GET`. Underneath the address bar, click the Headers tab. The first key field will be `Content-Type` and it's value will be `application/json`. Click the Body tab and select the "raw" radio button. Select "JSON (application/json)" from the dropdown on the right.
 
 In the textarea below the radio buttons, make an object with a name and price property:
 
