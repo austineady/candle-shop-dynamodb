@@ -7,7 +7,6 @@ Core Dependencies:
 aws-sdk
 express
 body-parser
-
 ```
 
 #### Cloned Projects
@@ -18,27 +17,14 @@ $ npm install
 
 #### From Scratch
 
-Create the project repo:
+Create the project repo, create main JS file, initialize `npm`, and install dependencies:
 
 ```
 $ mkdir candle-shop && cd candle-shop
-```
-
-Initialize an `npm` project:
-
-```
+$ touch server.js
 $ npm init -y
-```
-
-`npm init` will create a `package.json` file, allowing the installation of node modules from `npm`. The `-y` tag above skips the configuration setup by setting everything to default.
-
-Install dependencies:
-
-```
 $ npm install --save express@4.16.2 body-parser@1.18.2 aws-sdk@2.188.0
 ```
-
-The numbers following `@` specify the package version number at the time of writing this so that any changes to these libraries in the future won't impact this project.
 
 A DynamoDB database will need to be downloaded to develop locally. Downloads can be found [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html).
 
@@ -122,11 +108,10 @@ dynamo.createTable(ProductsTable, function (error, data) {
   console.log(JSON.stringify(data, null, 2));
 });
 ```
-> Some people might ask why I don't use `console.error` and instead pass through a string starting with 'Error:...'. Console.error looks identical to actual errors, which makes them hard to find if a lot of errors are thrown at once. This way, I know explicitly what and where something went wrong.
 
 During development, I was repeatedly restarting the database server after editing table or model schema. That means that the tables repeatedly needed to be created. Additionally, anytime I restarted my non-database server script, it would try to re-create the table. If the table already existed, dynamo would throw an error. I ended up wrapping my table creation logic with `dynamo.listTables`, which would check if the table already existed first.
 
-`dynamo.listTables` takes two parameters. The first is an options object where you can specify a limits, filters, etc. The second is a callback function. Since I only had one table, I passed through an empty object as per their documentation examples.
+`dynamo.listTables` takes two parameters. The first is an options object where you can specify limits, filters, etc. The second is a callback function. Since there's only one table, I passed through an empty object as seen in their documentation examples.
 
 ```
 const ProductsTable = require('./tables/Products');
