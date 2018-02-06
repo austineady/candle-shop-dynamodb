@@ -35,26 +35,12 @@ const client = new AWS.DynamoDB.DocumentClient({
   convertEmptyValues: true
 });
 
-
-const {
-  getProductByName,
-  getSingleProduct,
-  saveProducts,
-  saveSingleProduct,
-  getAllProducts,
-  updateProduct
-} = require('./controllers/products');
-
-client.getAllProducts = getAllProducts.bind(client);
-client.getProduct = getProductByName.bind(client);
-client.getSingleProduct = getSingleProduct.bind(client);
-client.saveSingleProduct = saveSingleProduct.bind(client);
-client.saveProducts = saveProducts.bind(client);
-client.updateProduct = updateProduct.bind(client);
+const ProductsController = require('./controllers/products');
+const productsCtrl = ProductsController(client);
 
 const Product = require('./models/Product');
 
-app.post('/products', function (req, res, next) {
+app.post('/products', function (req, res) {
   let submission = [];
   if (Array.isArray(req.body)) {
     // list of products
@@ -70,7 +56,7 @@ app.post('/products', function (req, res, next) {
       return res.status(400).end('/products POST endpoint requires a product name and price');
     }
   }
-  client.saveProducts(submission, function (err, result) {
+  productsCtrl.saveProducts(submission, function (err, result) {
     if (err) {
       return res.status(400).json({ err });
     } else {
@@ -83,13 +69,13 @@ app.get('/products', function (req, res) {
   if (req.query.name) {
     // query products
     const name = req.query.name;
-    client.getProduct(name, function (error, result) {
+    productsCtrl.getProduct(name, function (error, result) {
       if (error) res.status(400).json(error);
       res.status(200).json(result);
     });
   } else {
     // send all products
-    client.getAllProducts(function (error, result) {
+    productsCtrl.getAllProducts(function (error, result) {
       if (error) {
         res.status(400).json(error);
       }
@@ -101,7 +87,7 @@ app.get('/products', function (req, res) {
 app.get('/products/:productId', function (req, res) {
   const productId = req.params.productId;
   if (!productId) res.status(400).end('GET /products/:productId requires a productId be present in the URL.');
-  client.getSingleProduct(productId, function (error, result) {
+  productsCtrl.getSingleProduct(productId, function (error, result) {
     if (error) res.status(400).json(error);
     res.status(200).json(result);
   });
@@ -117,7 +103,7 @@ app.post('/products/:productId', function (req, res) {
   if (req.body.name) newData.name = req.body.name;
   if (req.body.price) newData.price = req.body.price;
   // update product
-  client.updateProduct(newData, function (error, result) {
+  productsCtrl.updateProduct(newData, function (error, result) {
     if (error) res.status(400).json(error);
     res.status(200).json(result);
   });
