@@ -1,14 +1,15 @@
-const uuid = require('node-uuid');
+const dynogels = require('../db/dynogels');
+const Joi = require('joi');
 
-module.exports = function (name, price) {
-  return {
-    TableName: 'Products',
-    Item: {
-      productId: uuid.v4(),
-      price,
-      name,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  };
-};
+module.exports = dynogels.define('Product', {
+  hashKey: 'productId',
+  timestamps: true,
+  schema: {
+    productId: dynogels.types.uuid(),
+    name: Joi.string(),
+    price: Joi.number()
+  },
+  indexes : [{
+    hashKey : 'name', rangeKey : 'productId', name : 'ProductName-index', type : 'global'
+  }]
+});
