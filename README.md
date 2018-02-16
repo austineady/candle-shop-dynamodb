@@ -181,7 +181,7 @@ const client = new AWS.DynamoDB.DocumentClient({
 
 `convertEmptyValues` will simply convert empty strings or objects to `NULL`, which is not desired in all cases but was set here to find any errors easier later on.
 
-The method to add items with the `DocumentClient` or now `client` is `.put({...})`. Since the `Product` constructor already returns data in the correct format for `put()`, it just needs to be called with a new `Product` and a callback function.
+The method to add items with the `DocumentClient`, now `client`, is `.put({...})`. Since the `Product` constructor already returns data in the correct format for `put()`, it just needs to be called with a new `Product` and a callback function.
 
 ```
 const product = Product('Autumn Breeze', 12.99);
@@ -272,4 +272,12 @@ In the textarea below the radio buttons, make an object with a name and price pr
 ```
 
 Make sure the DynamoDB server and the Express server are running and click Send.
+
+- Postman will send a POST request to `http://localhost:3000/products` with the JSON data provided
+- `Express` will recognize the route and execute a callback function
+- `body-parser` will see plain text in the `req.body` and a header specifying the `Content-Type` as `application/json`
+- `body-parser` will take that text and format it into JSON.
+- A new `Product` is created using the product's name and price, using the constructor function from `models/Product.js`.
+- The new `Product` is passed to the `saveProduct()` function from `controllers/products.js`.
+- The controller passes the new product to `client.put()` which enters it into DynamoDB.
 

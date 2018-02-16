@@ -1,124 +1,112 @@
-module.exports = function ProductsController(client) {
-  return {
-    getProductByName(name, cb) {
-      const params = {
-        TableName: 'Products', // required
-        IndexName: 'ProductName-index',
-        KeyConditions: {
-          name: {
-            ComparisonOperator: 'EQ',
-            AttributeValueList: [name]
-          }
-        }
-      };
-      client.query(params, function (error, data) {
-        if (error) {
-          cb({
-            message: 'Error getting product',
-            error
-          });
-        }
-        cb(null, data);
-      });
-    },
-    
-    getSingleProduct(productId, cb) {
-      const params = {
-        TableName: 'Products', // required
-        Key: {
-          productId
-        }
-      };
-      client.get(params, function (error, data) {
-        if (error) cb({ message: 'Error getting product', error });
-        cb(null, data);
-      });
-    },
-    
-    getAllProducts(cb) {
-      const params = {
-        TableName: 'Products', // required
-        Limit: 15 // or 1MB whichever happens first
-      };
-    
-      const productList = [];
-    
-      client.scan(params).eachPage(function (error, data) {
-        if (error) {
-          cb({ message: 'Error while Scanning', error });
-        } else if (data) {
-          for (let i = 0; i < data.Items.length; i++) {
-            productList.push(data.Items[i]);
-          }
-        } else {
-          cb(null, productList);
-        }
-      });
-    },
-    
-    updateProduct(newProductData, cb) {
-      if (!newProductData.name && !newProductData.price) {
-        return cb(null, newProductData);
+const Product = require('../models/product');
+
+/**
+ * Create Product
+ * @description Create a single product with provided name and price.
+ * @param {Object} product - { name: String, price: Number }
+ */
+function createProduct(product) {
+  return new Promise(function (resolve, reject) {
+    Product.create(product, { overwrite: false }, function (err, result) {
+      if (err) return reject(err);
+      else return resolve(result);
+    });
+  });
+}
+
+/**
+ * Update Product
+ * @description Update a single product. Requires a productId
+ * @param {Object} product - object containing productId and new data
+ * @returns {Function} cb - callback(error, result)
+ */
+function updateProduct(product) {
+  return new Promise(function (resolve, reject) {
+    if (!product.productId) return reject({
+      message: 'A productId is required to update a product\'s data.'
+    });
+    const expectations = {
+      expected: {
+        productId: { Exists: true }
       }
-      const params = {
-        TableName: 'Products',
-        Key: {
-          productId: newProductData.productId,
-        },
-        AttributeUpdates: {
-          updatedAt: {
-            Action: 'PUT',
-            Value: new Date().toISOString()
-          }
-        }
-      };
-      if (newProductData.name) {
-        params.AttributeUpdates.name = {
-          Action: 'PUT',
-          Value: newProductData.name
-        };
-      }
-      if (newProductData.price) {
-        params.AttributeUpdates.price = {
-          Action: 'PUT',
-          Value: newProductData.price
-        };
-      }
-      client.update(params, function (error, data) {
-        if (error) return cb(error);
-        cb(null, newProductData);
-      });
-    },
-    
-    saveSingleProduct(product, cb) {
-      client.put(product, function (error, data) {
-        if (error) return console.log(`ERROR: Unable to create ${product.Item.name}`);
-        console.log(`Created a Product: ${product.Item.name}`);
-        if (cb) cb(error, product.Item);
-      });
-    },
-    
-    saveProducts(products, cb) {
-      const params = {
-        RequestItems: {
-          Products: []
-        }
-      };
-      products.forEach(function (product) {
-        params.RequestItems.Products.push({
-          PutRequest: {
-            Item: product.Item
-          }
-        });
-      });
-      client.batchWrite(params, function (error, data) {
-        if (error) return cb({
-          message: 'There was a problem creating the new products',
-          error
-        });
-        console.log(`Created ${params.RequestItems.Products.length} products.`);
-        return cb(error, data);
-      });
+    };
+    Product.update(product, expectations, function (err, result) {
+      if (err) return reject(err);
+      else return resolve(result);
+    });
+  });
+}
+
+function getAllProducts() {
+  return new Promise(function (resolve, reject) {
+    Product
+    .scan()
+    .limit(10)
+    .exec(function (err, result) {
+      if (err) return reject(err);
+      else return resolve(result);
+    });
+  });
+}
+
+function getSingleProduct(productId) {
+  return new Promise(function (resolve, reject) {
+    Product.get(productId, function (err, result) {
+      if (err) return reject(err);
+      else return resolve(result);
+    });
+  });
+}
+
+function getProductsByName(name, cb) {
+  Product
+  .query(name)
+  .usingIndex('ProductName-index')
+  .exec(cb);
+}
+
+function getProductsByPrice(comparator, price, cb) {
+  Product
+  .scan()
+  .where('price')[comparator](parseFloat(price))
+  .limit(10)
+  .exec(cb);
+}
+
+function queryProducts(query) {
+  return new Promise(function (resolve, reject) {
+
+    function handle (err, result) {
+      if (err) return reject(err);
+      else return resolve(result);
     }
-  }
+
+    if (query.name) {
+      getProductsByName(handle);
+    } else if (query.price) {
+      getProductsByPrice('equals', query.price, handle);
+    } else if (query['price>']) {
+      getProductsByPrice('gte', query['price>'], handle);
+    } else if (query['price<']) {
+      getProductsByPrice('lte', query['price<'], handle);
+    }
+  });
+}
+
+function deleteSingleProduct(productId) {
+  return new Promise(function (resolve, reject) {
+    Product.destroy(productId, function (err) {
+      if (err) return reject(err);
+      else return resolve(true);
+    });
+  });
+}
+
+module.exports = {
+  createProduct,
+  updateProduct,
+  getAllProducts,
+  getSingleProduct,
+  queryProducts,
+  deleteSingleProduct
 };
